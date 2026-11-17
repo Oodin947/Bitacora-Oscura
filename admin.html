@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; object-src 'none'; base-uri 'self';"
+    />
+    <title>Administración — Bitácora Oscura</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="./styles/tokens.css" />
+    <link rel="stylesheet" href="./styles/layout.css" />
+    <link rel="stylesheet" href="./styles/components.css" />
+  </head>
+  <body>
+    <div class="grain-overlay" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a href="./index.html" class="brand glass-card" aria-label="Volver al sitio público">
+          <span class="brand__emblem">
+            <img src="./assets/logo-bitacora-oscura.jpg" alt="Bitácora Oscura" class="brand__logo" />
+          </span>
+          <span class="brand__text">
+            <span class="brand__name">Bitácora Oscura</span>
+            <span class="brand__sub">Panel de Administración</span>
+          </span>
+        </a>
+        <div class="header-actions">
+          <a href="./index.html" class="btn-glass">Ver sitio público →</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="container main-content" style="display:flex;justify-content:center;align-items:flex-start;">
+      <!-- Admin Login Gate -->
+      <section class="glass-card search-panel" id="admin-login-view" style="padding:2rem;margin-top:3rem;max-width:460px;width:100%;">
+        <div class="meta-row" style="margin-bottom:0.75rem;">
+          <span class="meta-tag meta-tag--accent">Acceso restringido</span>
+          <span>Solo Administrador</span>
+        </div>
+        <h1 style="font-family:var(--font-display);font-size:2.2rem;line-height:1.1;margin-bottom:0.5rem;">
+          Panel de Administración
+        </h1>
+        <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1.25rem;">
+          Ingresa tu clave de administrador para redactar publicaciones o editar las secciones del sitio.
+        </p>
+        <form id="admin-login-form" style="display:flex;flex-direction:column;gap:0.85rem;">
+          <div>
+            <label class="field-label" for="admin-passcode">Clave de acceso</label>
+            <input class="field-input" id="admin-passcode" type="password" placeholder="••••••••" autocomplete="current-password" required />
+          </div>
+          <p id="admin-login-error" class="is-hidden" style="font-family:var(--font-mono);font-size:0.75rem;color:#f87171;"></p>
+          <button class="btn-glass is-active" type="submit" style="justify-content:center;padding:0.65rem;">
+            Ingresar como administrador
+          </button>
+        </form>
+      </section>
+
+      <!-- Admin Dashboard -->
+      <section class="composer-panel is-hidden" id="admin-dashboard-view" style="width:100%;max-height:none;">
+        <div class="pdf-toolbar">
+          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <span style="font-family:var(--font-display);font-size:1.45rem;">Editor de Contenido</span>
+            <button class="btn-glass is-active" id="admin-tab-posts" type="button">Artículos y Medios</button>
+            <button class="btn-glass" id="admin-tab-about" type="button">Quiénes somos</button>
+            <button class="btn-glass" id="admin-tab-settings" type="button">Configuración</button>
+          </div>
+          <div class="pdf-toolbar__group">
+            <span id="admin-save-badge" class="meta-tag is-hidden" style="border-color:rgba(34,197,94,0.4);color:#4ade80;">Guardado</span>
+            <button class="btn-glass" id="comp-export-json" type="button">Exportar .JSON</button>
+            <button class="btn-glass" id="admin-reset-btn" type="button" title="Restaurar contenido original">Restaurar</button>
+            <button class="btn-glass" id="admin-logout-btn" type="button">Cerrar sesión</button>
+          </div>
+        </div>
+
+        <!-- Tab 1: Posts & Media Manager -->
+        <div class="admin-workspace" id="admin-panel-posts">
+          <aside class="admin-sidebar">
+            <button class="btn-glass is-active" id="admin-new-post" type="button" style="width:100%;justify-content:center;margin-bottom:0.85rem;">
+              + Nuevo artículo
+            </button>
+            <div id="admin-post-list" class="admin-post-list"></div>
+          </aside>
+
+          <div class="composer-body" style="flex:1;">
+            <div class="composer-form">
+              <div>
+                <label class="field-label" for="comp-title">Título</label>
+                <input class="field-input" id="comp-title" type="text" placeholder="Ej. Notas sobre luz y tipografía" />
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div>
+                  <label class="field-label" for="comp-type">Formato</label>
+                  <select class="field-select" id="comp-type">
+                    <option value="essay">Ensayo / Imagen</option>
+                    <option value="video">Video corto / Reel</option>
+                    <option value="pdf">Ficha PDF</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label" for="comp-category">Categoría</label>
+                  <input class="field-input" id="comp-category" type="text" value="Ensayo" />
+                </div>
+              </div>
+
+              <div>
+                <label class="field-label" for="comp-excerpt">Entradilla</label>
+                <input class="field-input" id="comp-excerpt" type="text" placeholder="Resumen breve para la tarjeta…" />
+              </div>
+
+              <div class="dropzone" id="composer-dropzone">
+                <input type="file" id="composer-file" accept="image/*,video/mp4,video/webm,application/pdf" class="sr-only" />
+                <p style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-primary);">
+                  Arrastra una imagen, video corto o PDF aquí
+                </p>
+                <p id="composer-file-status" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;">
+                  o haz clic para seleccionar archivo local (WebP, PNG, MP4, WebM, PDF)
+                </p>
+              </div>
+
+              <div>
+                <label class="field-label" for="comp-body">Cuerpo del artículo (párrafos separados por línea en blanco)</label>
+                <textarea class="field-textarea" id="comp-body" placeholder="Escribe el ensayo aquí…"></textarea>
+              </div>
+
+              <div style="display:flex;gap:0.65rem;flex-wrap:wrap;">
+                <button class="btn-glass is-active" id="comp-publish" type="button">Guardar publicación</button>
+                <button class="btn-glass" id="comp-export-html" type="button">Descargar .HTML</button>
+              </div>
+            </div>
+
+            <div class="composer-preview" id="composer-preview" aria-label="Vista previa en vivo"></div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Quiénes somos Editor -->
+        <div class="admin-about-editor is-hidden" id="admin-panel-about">
+          <div style="display:flex;gap:0.5rem;margin-bottom:1.25rem;flex-wrap:wrap;" id="admin-about-pills"></div>
+          <div class="composer-form" style="max-width:680px;">
+            <div>
+              <label class="field-label" for="admin-about-heading">Titular del pilar</label>
+              <input class="field-input" id="admin-about-heading" type="text" />
+            </div>
+            <div>
+              <label class="field-label" for="admin-about-desc">Descripción</label>
+              <textarea class="field-textarea" id="admin-about-desc" style="min-height:90px;"></textarea>
+            </div>
+            <div>
+              <label class="field-label" for="admin-about-points">Puntos clave (uno por línea)</label>
+              <textarea class="field-textarea" id="admin-about-points" style="min-height:95px;"></textarea>
+            </div>
+            <div>
+              <label class="field-label" for="admin-about-note">Cita humana al pie</label>
+              <input class="field-input" id="admin-about-note" type="text" />
+            </div>
+            <div>
+              <button class="btn-glass is-active" id="admin-about-save" type="button">Guardar cambios de Quiénes somos</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Configuración (Cambiar clave de administrador) -->
+        <div class="admin-about-editor is-hidden" id="admin-panel-settings">
+          <div style="max-width:460px;">
+            <h2 style="font-family:var(--font-display);font-size:1.85rem;margin-bottom:0.4rem;">Seguridad y Acceso</h2>
+            <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1.25rem;">
+              Cambia la clave de administrador. En Netlify se almacena cifrada con scrypt dentro de Netlify Database.
+            </p>
+            <form id="admin-password-form" class="composer-form">
+              <div>
+                <label class="field-label" for="admin-curr-pass">Clave actual</label>
+                <input class="field-input" id="admin-curr-pass" type="password" required autocomplete="current-password" />
+              </div>
+              <div>
+                <label class="field-label" for="admin-new-pass">Nueva clave (mínimo 8 caracteres)</label>
+                <input class="field-input" id="admin-new-pass" type="password" minlength="8" required autocomplete="new-password" />
+              </div>
+              <div>
+                <label class="field-label" for="admin-confirm-pass">Confirmar nueva clave</label>
+                <input class="field-input" id="admin-confirm-pass" type="password" minlength="8" required autocomplete="new-password" />
+              </div>
+              <p id="admin-pass-msg" class="is-hidden" style="font-family:var(--font-mono);font-size:0.75rem;"></p>
+              <div>
+                <button class="btn-glass is-active" type="submit">Actualizar clave</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./js/data.js" defer></script>
+    <script src="./js/composer.js" defer></script>
+  </body>
+</html>

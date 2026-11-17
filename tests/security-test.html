@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pruebas de Seguridad — Bitácora Oscura</title>
+    <style>
+      body { font-family: monospace; background: #08080a; color: #f4f4f6; padding: 2rem; max-width: 760px; margin: auto; }
+      .pass { color: #4ade80; }
+      .fail { color: #f87171; }
+      li { margin-bottom: 0.5rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Pruebas de Seguridad (XSS &amp; Sanitización de URLs)</h1>
+    <ul id="results"></ul>
+    <p id="summary"></p>
+
+    <script src="../js/data.js"></script>
+    <script>
+      const { escapeHtml, sanitizeUrl } = window.EditorialBlog.data;
+      const tests = [
+        {
+          name: 'Escapa etiqueta <script>',
+          run: () => !escapeHtml('<script>alert(1)<\/script>').includes('<script>')
+        },
+        {
+          name: 'Escapa payload <img onerror=...>',
+          run: () => escapeHtml('<img src=x onerror=alert(1)>').startsWith('&lt;img')
+        },
+        {
+          name: 'Escapa comillas en atributos HTML',
+          run: () => !escapeHtml('" onmouseover="alert(1)').includes('"')
+        },
+        {
+          name: 'Bloquea esquema javascript:',
+          run: () => sanitizeUrl('javascript:alert(1)') === ''
+        },
+        {
+          name: 'Bloquea esquema data:text/html',
+          run: () => sanitizeUrl('data:text/html,<script>alert(1)<\/script>') === ''
+        },
+        {
+          name: 'Bloquea data:image en modo estricto (PDF/Video)',
+          run: () => sanitizeUrl('data:image/png;base64,AAAA', false) === ''
+        },
+        {
+          name: 'Permite URLs https: válidas',
+          run: () => sanitizeUrl('https://ejemplo.com/doc.pdf', false) === 'https://ejemplo.com/doc.pdf'
+        },
+        {
+          name: 'Permite rutas relativas locales ./assets/...',
+          run: () => sanitizeUrl('./assets/logo-bitacora-oscura.jpg') === './assets/logo-bitacora-oscura.jpg'
+        }
+      ];
+
+      const list = document.getElementById('results');
+      let passed = 0;
+      for (const t of tests) {
+        const ok = Boolean(t.run());
+        if (ok) passed++;
+        const li = document.createElement('li');
+        li.className = ok ? 'pass' : 'fail';
+        li.textContent = `${ok ? '[PASS]' : '[FAIL]'} ${t.name}`;
+        list.appendChild(li);
+      }
+      document.getElementById('summary').textContent = `Resultado: ${passed}/${tests.length} pruebas superadas.`;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS site_content (
+  key TEXT PRIMARY KEY,
+  data JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS admin_auth (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  passcode_hash TEXT NOT NULL,
+  token_secret TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
