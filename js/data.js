@@ -191,7 +191,7 @@ function sanitizeUrl(url, allowDataImage = true) {
   if (trimmed.startsWith('./') || trimmed.startsWith('/') || trimmed.startsWith('blob:') || trimmed.startsWith('procedural://')) {
     return trimmed;
   }
-  if (allowDataImage && /^data:image\/(png|jpeg|jpg|webp|gif|svg\+xml);/i.test(trimmed)) {
+  if (allowDataImage && /^data:image\/(png|jpeg|jpg|webp|avif|gif|svg\+xml);/i.test(trimmed)) {
     return trimmed;
   }
   try {

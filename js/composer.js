@@ -351,7 +351,35 @@ function initAdminPage() {
     `;
   }
 
-  function handleFiles(files) {
+  function compressImageToDataUrl(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const rawDataUrl = String(reader.result || '');
+        if (file.type === 'image/svg+xml' || file.size <= 350 * 1024) {
+          resolve(rawDataUrl);
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 1400;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const webp = canvas.toDataURL('image/webp', 0.84);
+          resolve(webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', 0.84));
+        };
+        img.onerror = () => resolve(rawDataUrl);
+        img.src = rawDataUrl;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleFiles(files) {
     const file = files?.[0];
     if (!file) return;
     const sizeLabel = file.size > 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(file.size / 1024))} KB`;
@@ -367,14 +395,12 @@ function initAdminPage() {
       typeSelect.value = 'essay';
     }
 
-    if (kind === 'image' && file.size <= 1.5 * 1024 * 1024) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        attachedMedia = { kind, url: String(reader.result || ''), name: file.name, sizeLabel };
-        if (fileStatus) fileStatus.textContent = `Cargado: ${file.name} (${sizeLabel})`;
-        renderPreview();
-      };
-      reader.readAsDataURL(file);
+    if (kind === 'image') {
+      if (fileStatus) fileStatus.textContent = `Optimizando ${file.name} (${sizeLabel})…`;
+      const dataUrl = await compressImageToDataUrl(file);
+      attachedMedia = { kind, url: dataUrl, name: file.name, sizeLabel };
+      if (fileStatus) fileStatus.textContent = `Imagen lista: ${file.name} (${sizeLabel} → optimizada)`;
+      renderPreview();
       return;
     }
 
