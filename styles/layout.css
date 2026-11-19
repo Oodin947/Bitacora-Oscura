@@ -385,9 +385,11 @@
 
 .post-view__topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2.5rem;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
 }
 
 .post-hero {
@@ -439,6 +441,7 @@
   position: sticky;
   top: calc(var(--header-height) + 2rem);
   padding: 1.1rem;
+  z-index: 2;
 }
 
 .post-toc__label {
@@ -479,10 +482,14 @@
 
 /* Prose Typography (68ch) */
 .post-prose {
+  width: 100%;
   max-width: 68ch;
+  min-width: 0;
+  margin-inline: auto;
   font-size: 1.0625rem;
   line-height: 1.75;
   color: #d4d4d8;
+  overflow-wrap: anywhere;
 }
 
 .post-prose h2 {
@@ -590,11 +597,15 @@
    ========================================================================== */
 @media (max-width: 1080px) {
   .post-layout {
-    grid-template-columns: minmax(0, 68ch);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
   }
   .post-toc {
-    position: static;
-    margin-bottom: 1.5rem;
+    position: static !important;
+    width: 100%;
+    max-width: 68ch;
+    margin-inline: auto;
+    margin-bottom: 0.5rem;
   }
   .post-layout__spacer {
     display: none;
@@ -679,5 +690,19 @@
   }
   .pdf-spec-card__preview {
     grid-template-columns: 1fr;
+  }
+  .post-hero__title {
+    font-size: clamp(1.85rem, 8vw, 2.5rem);
+  }
+  .post-hero__subtitle {
+    font-size: 1.02rem;
+  }
+  .post-prose {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  .post-prose blockquote {
+    padding: 1rem 1.1rem;
+    font-size: 1.2rem;
   }
 }
