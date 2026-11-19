@@ -131,8 +131,35 @@
               </div>
 
               <div>
-                <label class="field-label" for="comp-body">Cuerpo del artículo (párrafos separados por línea en blanco)</label>
-                <textarea class="field-textarea" id="comp-body" placeholder="Escribe el ensayo aquí…"></textarea>
+                <span class="field-label">Cuerpo del artículo</span>
+                <div class="rich-toolbar" id="rich-toolbar" role="toolbar" aria-label="Formato de texto">
+                  <button class="rich-tool-btn" type="button" data-cmd="bold" title="Negrita"><strong>N</strong></button>
+                  <button class="rich-tool-btn" type="button" data-cmd="italic" title="Cursiva"><em>K</em></button>
+                  <button class="rich-tool-btn" type="button" data-cmd="underline" title="Subrayado"><u>S</u></button>
+                  <button class="rich-tool-btn" type="button" data-cmd="strikeThrough" title="Tachado"><s>T</s></button>
+                  <span class="rich-tool-sep" aria-hidden="true"></span>
+                  <button class="rich-tool-btn" type="button" data-cmd="formatBlock" data-val="H2" title="Subtítulo">H2</button>
+                  <button class="rich-tool-btn" type="button" data-cmd="formatBlock" data-val="BLOCKQUOTE" title="Cita">“ ”</button>
+                  <span class="rich-tool-sep" aria-hidden="true"></span>
+                  <button class="rich-tool-btn" type="button" data-cmd="insertUnorderedList" title="Viñetas">• Lista</button>
+                  <button class="rich-tool-btn" type="button" data-cmd="insertOrderedList" title="Numeración">1. Lista</button>
+                  <span class="rich-tool-sep" aria-hidden="true"></span>
+                  <button class="rich-tool-btn" type="button" data-cmd="justifyLeft" title="Alinear a la izquierda">Izq</button>
+                  <button class="rich-tool-btn" type="button" data-cmd="justifyCenter" title="Centrar">Centro</button>
+                  <button class="rich-tool-btn" type="button" data-cmd="justifyRight" title="Alinear a la derecha">Der</button>
+                  <button class="rich-tool-btn" type="button" data-cmd="justifyFull" title="Justificar">Justificar</button>
+                  <span class="rich-tool-sep" aria-hidden="true"></span>
+                  <button class="rich-tool-btn" type="button" data-cmd="removeFormat" title="Limpiar formato">Limpiar</button>
+                </div>
+                <div
+                  id="comp-editor"
+                  class="rich-editor"
+                  contenteditable="true"
+                  role="textbox"
+                  aria-multiline="true"
+                  aria-label="Cuerpo del artículo"
+                  data-placeholder="Escribe el artículo aquí y usa la barra superior para dar formato…"
+                ></div>
               </div>
 
               <div style="display:flex;gap:0.65rem;flex-wrap:wrap;">

@@ -203,6 +203,57 @@ function sanitizeUrl(url, allowDataImage = true) {
   return '';
 }
 
+function sanitizeRichHtml(rawHtml) {
+  if (typeof rawHtml !== 'string' || !rawHtml.trim()) return '';
+  const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
+  const allowedTags = new Set([
+    'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE',
+    'H2', 'H3', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'DIV', 'SPAN'
+  ]);
+  const alignTags = new Set(['P', 'DIV', 'H2', 'H3', 'LI', 'BLOCKQUOTE']);
+  const validAligns = new Set(['left', 'center', 'right', 'justify']);
+
+  function cleanNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return document.createTextNode(node.textContent || '');
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return null;
+
+    const tag = node.tagName.toUpperCase();
+    if (!allowedTags.has(tag)) {
+      if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'IFRAME' || tag === 'OBJECT') {
+        return null;
+      }
+      const frag = document.createDocumentFragment();
+      node.childNodes.forEach((child) => {
+        const cleaned = cleanNode(child);
+        if (cleaned) frag.appendChild(cleaned);
+      });
+      return frag;
+    }
+
+    const el = document.createElement(tag.toLowerCase());
+    if (alignTags.has(tag)) {
+      const align = (node.style?.textAlign || node.getAttribute('align') || '').toLowerCase();
+      if (validAligns.has(align)) {
+        el.style.textAlign = align;
+      }
+    }
+    node.childNodes.forEach((child) => {
+      const cleaned = cleanNode(child);
+      if (cleaned) el.appendChild(cleaned);
+    });
+    return el;
+  }
+
+  const container = document.createElement('div');
+  doc.body.childNodes.forEach((child) => {
+    const cleaned = cleanNode(child);
+    if (cleaned) container.appendChild(cleaned);
+  });
+  return container.innerHTML;
+}
+
 window.EditorialBlog.data = {
   createSamplePdfBlobUrl,
   INITIAL_POSTS,
@@ -212,6 +263,7 @@ window.EditorialBlog.data = {
   saveStore,
   resetStore,
   escapeHtml,
-  sanitizeUrl
+  sanitizeUrl,
+  sanitizeRichHtml
 };
 })();

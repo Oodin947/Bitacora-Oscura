@@ -3,7 +3,7 @@
    ========================================================================== */
 
 (() => {
-const { INITIAL_POSTS, QUICK_NOTES, ABOUT_PILLARS, loadStore, escapeHtml, sanitizeUrl } = window.EditorialBlog.data;
+const { INITIAL_POSTS, QUICK_NOTES, ABOUT_PILLARS, loadStore, escapeHtml, sanitizeUrl, sanitizeRichHtml } = window.EditorialBlog.data;
 const { initVideoObservers, initLightbox, initPdfViewer } = window.EditorialBlog.media;
 const {
   runViewTransition,
@@ -489,9 +489,11 @@ function openPost(postId) {
       .map((s, idx) => `<li><a class="post-toc__link ${idx === 0 ? 'is-active' : ''}" href="#${escapeHtml(s.id)}">${escapeHtml(s.heading)}</a></li>`)
       .join('');
 
-    const sectionsHtml = (post.sections || [])
-      .map(
-        (s) => `
+    const sectionsHtml = post.bodyHtml
+      ? `<section><h2 id="${escapeHtml(post.sections?.[0]?.id || 'articulo')}">${escapeHtml(post.title)}</h2>${sanitizeRichHtml(post.bodyHtml)}</section>`
+      : (post.sections || [])
+          .map(
+            (s) => `
         <section>
           <h2 id="${escapeHtml(s.id)}">${escapeHtml(s.heading)}</h2>
           ${(s.body || []).map((par) => `<p>${escapeHtml(par)}</p>`).join('')}
@@ -508,8 +510,8 @@ function openPost(postId) {
           }
         </section>
       `
-      )
-      .join('');
+          )
+          .join('');
 
     const safeCover = sanitizeUrl(post.cover);
     const safeTitle = escapeHtml(post.title);

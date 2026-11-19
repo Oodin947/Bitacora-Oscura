@@ -11,7 +11,7 @@ const DEFAULT_PASSCODE = 'bitacora2026';
 const TOKEN_KEY = 'bitacora_admin_token';
 
 function initAdminPage() {
-  const { QUICK_NOTES, loadStore, saveStore, resetStore, escapeHtml, sanitizeUrl } = window.EditorialBlog.data;
+  const { QUICK_NOTES, loadStore, saveStore, resetStore, escapeHtml, sanitizeUrl, sanitizeRichHtml } = window.EditorialBlog.data;
   let state = loadStore();
 
   const loginView = document.getElementById('admin-login-view');
@@ -42,7 +42,8 @@ function initAdminPage() {
   const typeSelect = document.getElementById('comp-type');
   const catInput = document.getElementById('comp-category');
   const excerptInput = document.getElementById('comp-excerpt');
-  const bodyInput = document.getElementById('comp-body');
+  const editorEl = document.getElementById('comp-editor');
+  const toolbarEl = document.getElementById('rich-toolbar');
 
   const publishBtn = document.getElementById('comp-publish');
   const exportJsonBtn = document.getElementById('comp-export-json');
@@ -193,7 +194,7 @@ function initAdminPage() {
     typeSelect.value = 'essay';
     catInput.value = 'Ensayo';
     excerptInput.value = '';
-    bodyInput.value = '';
+    if (editorEl) editorEl.innerHTML = '';
     if (fileStatus) fileStatus.textContent = 'o haz clic para seleccionar archivo local (WebP, PNG, MP4, WebM, PDF)';
     renderPostList();
     renderPreview();
@@ -206,10 +207,16 @@ function initAdminPage() {
     typeSelect.value = post.type || 'essay';
     catInput.value = post.category || 'Ensayo';
     excerptInput.value = post.excerpt || '';
-    bodyInput.value = (post.sections || [])
-      .map((s) => (s.body || []).join('\n\n'))
-      .filter(Boolean)
-      .join('\n\n');
+    if (editorEl) {
+      if (post.bodyHtml) {
+        editorEl.innerHTML = sanitizeRichHtml(post.bodyHtml);
+      } else {
+        const plainParagraphs = (post.sections || [])
+          .flatMap((s) => s.body || [])
+          .filter(Boolean);
+        editorEl.innerHTML = plainParagraphs.map((par) => `<p>${escapeHtml(par)}</p>`).join('');
+      }
+    }
     if (fileStatus) fileStatus.textContent = 'Editando publicación existente (arrastra un archivo para reemplazar medio)';
     renderPostList();
     renderPreview();
@@ -275,8 +282,12 @@ function initAdminPage() {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-    const paragraphs = (bodyInput.value.trim() || 'Contenido en borrador.')
-      .split(/\n{2,}/)
+    const rawHtml = editorEl?.innerHTML || '';
+    const cleanHtml = sanitizeRichHtml(rawHtml);
+    const plainText = (editorEl?.innerText || '').trim();
+    const paragraphs = (plainText || 'Contenido en borrador.')
+      .split(/\n{1,}/)
+      .map((s) => s.trim())
       .filter(Boolean);
 
     const post = {
@@ -286,9 +297,10 @@ function initAdminPage() {
       bentoSpan: existing?.bentoSpan || (type === 'video' ? 'bento-span-5 bento-row-2' : 'bento-span-6'),
       category: catInput.value.trim() || 'Nota',
       date: existing?.date || new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(),
-      readTime: type === 'video' ? 'LOOP' : type === 'pdf' ? 'PDF' : `${Math.max(1, Math.ceil(paragraphs.join(' ').split(' ').length / 180))} MIN`,
+      readTime: type === 'video' ? 'LOOP' : type === 'pdf' ? 'PDF' : `${Math.max(1, Math.ceil(paragraphs.join(' ').split(/\s+/).length / 180))} MIN`,
       title,
       excerpt: excerptInput.value.trim() || paragraphs[0].slice(0, 140),
+      bodyHtml: cleanHtml || `<p>${escapeHtml(paragraphs[0])}</p>`,
       sections: [
         {
           id: existing?.sections?.[0]?.id || 'seccion-principal',
@@ -346,7 +358,7 @@ function initAdminPage() {
       <h3 style="font-family:var(--font-display);font-size:2rem;line-height:1.1;margin-bottom:0.75rem;">${escapeHtml(p.title)}</h3>
       <p style="color:var(--text-secondary);font-size:0.95rem;margin-bottom:1rem;">${escapeHtml(p.excerpt)}</p>
       <div style="border-top:1px solid var(--border-subtle);padding-top:0.85rem;font-size:0.9rem;color:#d4d4d8;">
-        ${p.sections[0].body.map((par) => `<p style="margin-bottom:0.75rem;">${escapeHtml(par)}</p>`).join('')}
+        ${p.bodyHtml || p.sections[0].body.map((par) => `<p style="margin-bottom:0.75rem;">${escapeHtml(par)}</p>`).join('')}
       </div>
     `;
   }
@@ -423,7 +435,18 @@ function initAdminPage() {
     handleFiles(e.dataTransfer.files);
   });
 
-  [titleInput, typeSelect, catInput, excerptInput, bodyInput].forEach((el) => {
+  toolbarEl?.querySelectorAll('[data-cmd]').forEach((btn) => {
+    btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      editorEl?.focus();
+      const cmd = btn.dataset.cmd;
+      const val = btn.dataset.val || null;
+      document.execCommand(cmd, false, val);
+      renderPreview();
+    });
+  });
+
+  [titleInput, typeSelect, catInput, excerptInput, editorEl].forEach((el) => {
     el?.addEventListener('input', renderPreview);
   });
 
@@ -457,7 +480,7 @@ function initAdminPage() {
   <p style="font-family:monospace;color:#d97706;">${escapeHtml(post.category)} · ${escapeHtml(post.date)}</p>
   <h1>${escapeHtml(post.title)}</h1>
   <p><em>${escapeHtml(post.excerpt)}</em></p>
-  ${post.sections[0].body.map((p) => `<p>${escapeHtml(p)}</p>`).join('\n  ')}
+  ${post.bodyHtml || post.sections[0].body.map((p) => `<p>${escapeHtml(p)}</p>`).join('\n  ')}
 </body>
 </html>`;
     downloadFile(`${post.id}.html`, html, 'text/html');
