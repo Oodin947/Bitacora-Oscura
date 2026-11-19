@@ -230,6 +230,14 @@ function initAdminPage() {
         flashSaved('Publicado en Netlify DB');
         return;
       }
+      if (res.status === 401) {
+        sessionStorage.removeItem(TOKEN_KEY);
+        flashSaved('Sesión expirada: inicia sesión');
+        await syncAuthView();
+        return;
+      }
+      flashSaved(`Error servidor (${res.status})`);
+      return;
     } catch (_) {}
     flashSaved('Guardado local');
   }
@@ -368,21 +376,22 @@ function initAdminPage() {
       const reader = new FileReader();
       reader.onload = () => {
         const rawDataUrl = String(reader.result || '');
-        if (file.type === 'image/svg+xml' || file.size <= 350 * 1024) {
+        if (file.type === 'image/svg+xml' || (file.type === 'image/png' && file.size <= 250 * 1024)) {
           resolve(rawDataUrl);
           return;
         }
         const img = new Image();
         img.onload = () => {
-          const maxW = 1400;
+          const maxW = 1200;
           const scale = img.width > maxW ? maxW / img.width : 1;
           const canvas = document.createElement('canvas');
           canvas.width = Math.round(img.width * scale);
           canvas.height = Math.round(img.height * scale);
           const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#08080a';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const webp = canvas.toDataURL('image/webp', 0.84);
-          resolve(webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', 0.84));
+          resolve(canvas.toDataURL('image/jpeg', 0.82));
         };
         img.onerror = () => resolve(rawDataUrl);
         img.src = rawDataUrl;
