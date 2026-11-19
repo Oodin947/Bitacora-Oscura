@@ -110,6 +110,89 @@ function renderLikeButton(postId) {
   `;
 }
 
+function renderShareButton(post) {
+  return `
+    <button
+      class="share-btn"
+      data-share-post="${escapeHtml(post.id)}"
+      data-cursor="Compartir"
+      type="button"
+      aria-label="Compartir publicación"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="18" cy="5" r="3"/>
+        <circle cx="6" cy="12" r="3"/>
+        <circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    </button>
+  `;
+}
+
+function getPostShareUrl(postId) {
+  const base = window.location.href.split('#')[0];
+  return `${base}#/post/${encodeURIComponent(postId)}`;
+}
+
+async function openShareMenu(postId) {
+  const post = posts.find((p) => p.id === postId);
+  if (!post) return;
+  const shareUrl = getPostShareUrl(post.id);
+  const shareText = `${post.title} — Bitácora Oscura`;
+
+  if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
+    try {
+      await navigator.share({ title: post.title, text: post.excerpt || shareText, url: shareUrl });
+      return;
+    } catch (_) {}
+  }
+
+  const modal = document.getElementById('share-modal');
+  const titleEl = document.getElementById('share-modal-title');
+  const optionsEl = document.getElementById('share-options');
+  const statusEl = document.getElementById('share-copy-status');
+  if (!modal || !optionsEl) return;
+
+  if (titleEl) titleEl.textContent = post.title;
+  statusEl?.classList.add('is-hidden');
+
+  const encUrl = encodeURIComponent(shareUrl);
+  const encText = encodeURIComponent(shareText);
+  const targets = [
+    { label: 'WhatsApp', href: `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}` },
+    { label: 'X / Twitter', href: `https://twitter.com/intent/tweet?text=${encText}&url=${encUrl}` },
+    { label: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${encUrl}` },
+    { label: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${encUrl}` }
+  ];
+
+  optionsEl.innerHTML =
+    targets
+      .map(
+        (t) =>
+          `<a class="share-option" href="${t.href}" target="_blank" rel="noopener noreferrer">${escapeHtml(t.label)} ↗</a>`
+      )
+      .join('') +
+    `<button class="share-option" id="share-copy-btn" type="button" style="grid-column:1 / -1;justify-content:center;border-color:rgba(217,119,6,0.4);">Copiar enlace</button>`;
+
+  document.getElementById('share-copy-btn')?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      if (statusEl) {
+        statusEl.textContent = 'Enlace copiado al portapapeles.';
+        statusEl.classList.remove('is-hidden');
+      }
+    } catch (_) {
+      if (statusEl) {
+        statusEl.textContent = shareUrl;
+        statusEl.classList.remove('is-hidden');
+      }
+    }
+  });
+
+  modal.classList.add('is-open');
+}
+
 async function handleLikeToggle(postId) {
   const likedSet = getLikedSet();
   const alreadyLiked = likedSet.has(postId);
@@ -258,7 +341,10 @@ function renderBentoCard(post) {
         <h3 class="bento-card__title reveal-mask">${safeTitle}</h3>
         <p class="bento-card__excerpt">${safeExcerpt}</p>
         <div class="bento-card__footer">
-          ${renderLikeButton(post.id)}
+          <div class="engagement-actions">
+            ${renderLikeButton(post.id)}
+            ${renderShareButton(post)}
+          </div>
           <button class="btn-glass" data-open-post="${safeId}" type="button">Ver ficha →</button>
         </div>
       </article>
@@ -295,7 +381,10 @@ function renderBentoCard(post) {
           </div>
         </div>
         <div class="bento-card__footer">
-          <span>VISOR PDF.JS OSCURO</span>
+          <div class="engagement-actions">
+            ${renderLikeButton(post.id)}
+            ${renderShareButton(post)}
+          </div>
           <div style="display:flex;gap:0.5rem;">
             <button class="btn-glass" data-open-pdf="${safePdfUrl}" data-pdf-title="${safeTitle}" type="button">Abrir visor PDF</button>
             <button class="btn-glass" data-open-post="${safeId}" type="button">Notas →</button>
@@ -325,7 +414,10 @@ function renderBentoCard(post) {
       <h3 class="bento-card__title reveal-mask">${safeTitle}</h3>
       <p class="bento-card__excerpt">${safeExcerpt}</p>
       <div class="bento-card__footer">
-        ${renderLikeButton(post.id)}
+        <div class="engagement-actions">
+          ${renderLikeButton(post.id)}
+          ${renderShareButton(post)}
+        </div>
         <span style="color:var(--accent-bright);">Leer artículo →</span>
       </div>
     </article>
@@ -470,7 +562,10 @@ function openPost(postId) {
                   Deja tu opinión o reacciona a esta publicación.
                 </p>
               </div>
-              ${renderLikeButton(post.id)}
+              <div class="engagement-actions">
+                ${renderLikeButton(post.id)}
+                ${renderShareButton(post)}
+              </div>
             </div>
 
             <form class="glass-card comments-form" id="comment-form">
@@ -500,6 +595,9 @@ function openPost(postId) {
     `;
 
     window.scrollTo({ top: 0, behavior: 'instant' });
+    if (window.location.hash !== `#/post/${encodeURIComponent(post.id)}`) {
+      history.replaceState(null, '', `#/post/${encodeURIComponent(post.id)}`);
+    }
     document.getElementById('back-to-feed')?.addEventListener('click', closePost);
     bindDynamicTriggers();
     initTocObserver();
@@ -587,6 +685,9 @@ async function initPostEngagement(postId) {
 
 function closePost() {
   if (!feedView || !postView) return;
+  if (window.location.hash.startsWith('#/post/')) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
   runViewTransition(() => {
     postView.classList.add('is-hidden');
     postView.innerHTML = '';
@@ -599,7 +700,14 @@ function closePost() {
 function bindDynamicTriggers() {
   document.querySelectorAll('[data-open-post]').forEach((el) => {
     el.addEventListener('click', (e) => {
-      if (e.target.closest('[data-open-pdf]') || e.target.closest('[data-audio-toggle]') || e.target.closest('[data-like-btn]')) return;
+      if (
+        e.target.closest('[data-open-pdf]') ||
+        e.target.closest('[data-audio-toggle]') ||
+        e.target.closest('[data-like-btn]') ||
+        e.target.closest('[data-share-post]')
+      ) {
+        return;
+      }
       openPost(el.dataset.openPost);
     });
   });
@@ -608,6 +716,13 @@ function bindDynamicTriggers() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       handleLikeToggle(btn.dataset.likeBtn);
+    });
+  });
+
+  document.querySelectorAll('[data-share-post]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openShareMenu(btn.dataset.sharePost);
     });
   });
 
@@ -827,8 +942,21 @@ function init() {
   renderHero();
   renderFilters();
   renderBentoGrid();
-  fetchRemoteContent();
+  fetchRemoteContent().then(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith('#/post/')) {
+      const targetId = decodeURIComponent(hash.slice(7));
+      if (posts.some((p) => p.id === targetId)) openPost(targetId);
+    }
+  });
   fetchAllLikes();
+
+  // Share modal close bindings
+  const shareModal = document.getElementById('share-modal');
+  document.getElementById('share-close')?.addEventListener('click', () => shareModal?.classList.remove('is-open'));
+  shareModal?.addEventListener('click', (e) => {
+    if (e.target === shareModal) shareModal.classList.remove('is-open');
+  });
 
   initScrollProgress();
   initSpotlightCards();
