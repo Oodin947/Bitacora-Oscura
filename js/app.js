@@ -601,6 +601,14 @@ function openPost(postId) {
       history.replaceState(null, '', `#/post/${encodeURIComponent(post.id)}`);
     }
     document.getElementById('back-to-feed')?.addEventListener('click', closePost);
+    postView.querySelectorAll('.post-prose img').forEach((img) => {
+      if (img.closest('[data-lightbox-src]')) return;
+      img.dataset.cursor = 'Ampliar';
+      img.addEventListener('click', () => {
+        const cap = img.closest('figure')?.querySelector('figcaption')?.textContent || img.alt || '';
+        window.openLightbox?.(img.src, cap);
+      });
+    });
     bindDynamicTriggers();
     initTocObserver();
     initPostEngagement(post.id);

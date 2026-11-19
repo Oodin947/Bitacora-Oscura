@@ -208,9 +208,10 @@ function sanitizeRichHtml(rawHtml) {
   const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
   const allowedTags = new Set([
     'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE',
-    'H2', 'H3', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'DIV', 'SPAN'
+    'H2', 'H3', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'DIV', 'SPAN',
+    'FIGURE', 'FIGCAPTION', 'IMG'
   ]);
-  const alignTags = new Set(['P', 'DIV', 'H2', 'H3', 'LI', 'BLOCKQUOTE']);
+  const alignTags = new Set(['P', 'DIV', 'H2', 'H3', 'LI', 'BLOCKQUOTE', 'FIGCAPTION']);
   const validAligns = new Set(['left', 'center', 'right', 'justify']);
 
   function cleanNode(node) {
@@ -230,6 +231,16 @@ function sanitizeRichHtml(rawHtml) {
         if (cleaned) frag.appendChild(cleaned);
       });
       return frag;
+    }
+
+    if (tag === 'IMG') {
+      const safeSrc = sanitizeUrl(node.getAttribute('src') || '', true);
+      if (!safeSrc) return null;
+      const img = document.createElement('img');
+      img.setAttribute('src', safeSrc);
+      img.setAttribute('alt', (node.getAttribute('alt') || '').slice(0, 180));
+      img.setAttribute('loading', 'lazy');
+      return img;
     }
 
     const el = document.createElement(tag.toLowerCase());

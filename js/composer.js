@@ -455,6 +455,24 @@ function initAdminPage() {
     });
   });
 
+  const richInsertImgBtn = document.getElementById('rich-insert-img-btn');
+  const richImgFile = document.getElementById('rich-img-file');
+
+  richInsertImgBtn?.addEventListener('click', () => richImgFile?.click());
+  richImgFile?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const dataUrl = await compressImageToDataUrl(file);
+    const safeSrc = sanitizeUrl(dataUrl, true);
+    if (!safeSrc || !editorEl) return;
+    editorEl.focus();
+    const safeAlt = escapeHtml(file.name.replace(/\.[^.]+$/, ''));
+    const html = `<figure><img src="${safeSrc}" alt="${safeAlt}" /><figcaption>${safeAlt}</figcaption></figure><p><br></p>`;
+    document.execCommand('insertHTML', false, html);
+    richImgFile.value = '';
+    renderPreview();
+  });
+
   [titleInput, typeSelect, catInput, excerptInput, editorEl].forEach((el) => {
     el?.addEventListener('input', renderPreview);
   });
